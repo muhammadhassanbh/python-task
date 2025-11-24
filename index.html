@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Performance Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            background: black;
+            color: white;
+            padding: 10px;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            background: #eee;
+            padding: 15px;
+            min-height: 200px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Student Performance Dashboard</h1>
+
+    <div class="container">
+
+        <h2>Add Student</h2>
+        <label>Name:</label>
+        <input type="text" id="name">
+
+        <label>Roll Number:</label>
+        <input type="number" id="roll">
+
+        <label>Age:</label>
+        <input type="number" id="age">
+
+        <label>Gender:</label>
+        <input type="text" id="gender">
+
+        <label>Marks (5 Subjects):</label>
+        <input type="number" id="m1" placeholder="Subject 1">
+        <input type="number" id="m2" placeholder="Subject 2">
+        <input type="number" id="m3" placeholder="Subject 3">
+        <input type="number" id="m4" placeholder="Subject 4">
+        <input type="number" id="m5" placeholder="Subject 5">
+
+        <button onclick="addStudent()">Submit</button>
+        <button onclick="clearForm()">Clear</button>
+
+        <h2>Actions</h2>
+        <button onclick="viewStudents()">View Students</button>
+        <button onclick="searchStudent()">Search Student</button>
+        <button onclick="showStats()">Show Statistics</button>
+        <button onclick="factorialPrompt()">Roll Number Factorial</button>
+
+        <h2>Output</h2>
+        <div id="output"></div>
+
+    </div>
+
+    <script>
+        // STUDENT LIST (Array of Objects)
+        let students = [];
+
+        // Utility: Calculate percentage
+        function calculatePercentage(marks) {
+            return (marks.reduce((a, b) => a + b, 0) / marks.length);
+        }
+
+        // Utility: Grade assignment
+        function assignGrade(percent) {
+            if (percent >= 90) return "A+";
+            if (percent >= 80) return "A";
+            if (percent >= 70) return "B";
+            if (percent >= 60) return "C";
+            if (percent >= 50) return "D";
+            return "F";
+        }
+
+        // Add student
+        function addStudent() {
+            let name = document.getElementById("name").value.trim();
+            let roll = parseInt(document.getElementById("roll").value);
+            let age = parseInt(document.getElementById("age").value);
+            let gender = document.getElementById("gender").value;
+
+            // Validation
+            if (!/^[A-Za-z ]+$/.test(name)) {
+                alert("Name must contain only letters.");
+                return;
+            }
+            if (!roll || !age) {
+                alert("Roll and Age must be numbers.");
+                return;
+            }
+
+            let marks = [
+                parseFloat(document.getElementById("m1").value),
+                parseFloat(document.getElementById("m2").value),
+                parseFloat(document.getElementById("m3").value),
+                parseFloat(document.getElementById("m4").value),
+                parseFloat(document.getElementById("m5").value)
+            ];
+
+            if (marks.some(m => isNaN(m) || m < 0 || m > 100)) {
+                alert("Marks must be between 0 and 100.");
+                return;
+            }
+
+            let percent = calculatePercentage(marks);
+            let grade = assignGrade(percent);
+
+            let student = {
+                name, roll, age, gender, marks,
+                percentage: percent.toFixed(2),
+                grade
+            };
+
+            students.push(student);
+            alert("Student Added!");
+            clearForm();
+        }
+
+        // Clear form fields
+        function clearForm() {
+            document.querySelectorAll("input").forEach(i => i.value = "");
+        }
+
+        // View all students
+        function viewStudents() {
+            if (students.length === 0) {
+                document.getElementById("output").textContent = "No students yet.";
+                return;
+            }
+
+            let out = "";
+            students.forEach(s => {
+                out += `Name: ${s.name}
+Roll: ${s.roll}
+Age: ${s.age}
+Gender: ${s.gender}
+Marks: ${s.marks.join(", ")}
+Percentage: ${s.percentage}%
+Grade: ${s.grade}
+------------------------------------\n`;
+            });
+
+            document.getElementById("output").textContent = out;
+        }
+
+        // Search student by roll
+        function searchStudent() {
+            let roll = parseInt(prompt("Enter roll number:"));
+            let found = students.find(s => s.roll === roll);
+
+            if (found) {
+                document.getElementById("output").textContent =
+                    `FOUND STUDENT:\n` + JSON.stringify(found, null, 2);
+            } else {
+                document.getElementById("output").textContent = "Student not found!";
+            }
+        }
+
+        // Statistics (highest scorer + averages)
+        function showStats() {
+            if (students.length === 0) {
+                document.getElementById("output").textContent = "No data available.";
+                return;
+            }
+
+            let highest = students.reduce((a, b) => (a.percentage > b.percentage ? a : b));
+
+            // Subject-wise averages
+            let subjectSums = [0, 0, 0, 0, 0];
+            students.forEach(s => {
+                for (let i = 0; i < 5; i++) {
+                    subjectSums[i] += s.marks[i];
+                }
+            });
+
+            let avg = subjectSums.map(s => (s / students.length).toFixed(2));
+
+            document.getElementById("output").textContent =
+                `Highest Scorer: ${highest.name} (${highest.percentage}%)
+Subject Averages: ${avg.join(", ")}`;
+        }
+
+        // Recursion: factorial
+        function factorial(n) {
+            if (n <= 1) return 1;
+            return n * factorial(n - 1);
+        }
+
+        function factorialPrompt() {
+            let n = parseInt(prompt("Enter roll number for factorial:"));
+            if (isNaN(n)) return alert("Invalid number");
+            document.getElementById("output").textContent =
+                `Factorial of ${n} = ${factorial(n)}`;
+        }
+    </script>
+
+</body>
+
+</html>
